@@ -1,0 +1,2134 @@
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Panel Hosting QRIS Payment</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<style>
+  /* Custom scrollbar for history table on small screens */
+  .history-table::-webkit-scrollbar {
+    height: 8px;
+  }
+  .history-table::-webkit-scrollbar-thumb {
+    background-color: rgba(79, 70, 229, 0.5);
+    border-radius: 4px;
+  }
+  /* Loading spinner */
+  .loading {
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col p-5 font-sans">
+
+<!-- Terms of Service Modal -->
+<div id="termsOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden"></div>
+<div id="termsService" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-2xl max-h-[80vh] overflow-y-auto bg-white rounded-xl shadow-lg p-6 z-50 hidden">
+  <button id="closeTerms" class="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-2xl font-bold">&times;</button>
+  <h4 class="text-indigo-600 text-xl font-semibold flex items-center gap-2 mb-4"><i class="fas fa-info-circle"></i> Terms of Service</h4>
+  <p class="mb-4 leading-relaxed text-gray-700">
+    Zlynzee Menyediakan Panel Dengan Speed Tinggi Dan Keamanan Yang Di Jamin 100% Keamanan nya. 
+    Kami Berkomitmen Untuk Menyediakan Pembelian panel hosting yang mudah di GUNAKAN Untuk Tujuan 
+    Host Bot wa, Games Dll. Kami Menyediakan Website Ini Untuk Memberi Kemudahan Untuk Melakukan 
+    Transaksi Dan Segala Jenis Error / Gagal Dalam Pembayaran Kami Siap Membantu Anda. Kami Menjaga 
+    Hak Konsumen yang tertulis pada Undang Undang dasar negara republic Indonesia.
+  </p>
+  <p class="mb-4 leading-relaxed text-gray-700">
+    Dengan menggunakan layanan ini, Anda menyetujui semua ketentuan dan syarat yang berlaku. 
+    Kami tidak bertanggung jawab atas penyalahgunaan panel yang dibuat melalui sistem ini.
+  </p>
+  <p class="mb-4 leading-relaxed text-gray-700">
+    Masa aktif panel adalah 32 hari sejak pembuatan. Setelah masa aktif berakhir, panel akan 
+    dinonaktifkan secara otomatis dan data akan dihapus dari sistem.
+  </p>
+</div>
+
+<div class="max-w-5xl w-full mx-auto bg-white rounded-2xl shadow-xl overflow-hidden mb-10">
+  <header class="bg-gradient-to-br from-indigo-600 to-indigo-800 text-white p-8 relative text-center overflow-hidden">
+    <h1 class="text-4xl font-extrabold flex justify-center items-center gap-3 z-10 relative"><i class="fas fa-server"></i> Panel Hosting</h1>
+    <p class="opacity-90 mt-2 text-lg z-10 relative max-w-xl mx-auto">Buat panel hosting dengan pembayaran QRIS yang aman dan cepat, serta fitur reseller profesional.</p>
+    <div class="absolute top-[-50px] right-[-50px] w-48 h-48 rounded-full bg-white bg-opacity-10"></div>
+    <div class="absolute bottom-[-80px] left-[-30px] w-36 h-36 rounded-full bg-white bg-opacity-5"></div>
+  </header>
+
+  <main class="p-10">
+    <!-- Maintenance Mode -->
+    <div id="maintenanceMode" class="hidden text-center p-12 bg-white rounded-xl shadow-md mb-10">
+      <i class="fas fa-tools text-yellow-500 text-7xl mb-8"></i>
+      <h2 class="text-3xl font-semibold mb-4 text-slate-900">Server Sedang Tutup</h2>
+      <p class="text-slate-700 mb-3 text-lg">Mohon Tunggu Hingga Server Buka/Update Selesai</p>
+      <p class="text-slate-700 mb-8 text-lg">Untuk Info Lebih Lanjut Klik Tombol Di Bawah Ini</p>
+      <a href="https://wa.me/6285355458766" target="_blank" class="inline-flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl px-8 py-4 text-xl transition">
+        <i class="fab fa-whatsapp"></i> Hubungi Kami
+      </a>
+    </div>
+
+    <!-- Normal Content -->
+    <div id="normalContent" class="">
+
+      <!-- Tabs -->
+      <div class="tabs flex border-b border-slate-200 mb-10 rounded-xl shadow-sm bg-white">
+        <button data-tab="create" class="tab active flex-1 py-4 text-center font-semibold text-indigo-600 bg-indigo-50 rounded-xl transition hover:bg-indigo-100 text-lg">
+          <i class="fas fa-plus-circle mr-3"></i> Buat Panel
+        </button>
+        <button data-tab="history" class="tab flex-1 py-4 text-center font-semibold text-slate-500 rounded-xl transition hover:bg-indigo-50 hover:text-indigo-600 text-lg">
+          <i class="fas fa-history mr-3"></i> Riwayat
+        </button>
+        <button data-tab="refund" class="tab flex-1 py-4 text-center font-semibold text-slate-500 rounded-xl transition hover:bg-indigo-50 hover:text-indigo-600 text-lg">
+          <i class="fas fa-exchange-alt mr-3"></i> Refund
+        </button>
+        <button data-tab="reseller" class="tab flex-1 py-4 text-center font-semibold text-slate-500 rounded-xl transition hover:bg-indigo-50 hover:text-indigo-600 text-lg">
+          <i class="fas fa-crown mr-3"></i> Reseller
+        </button>
+      </div>
+
+      <!-- Create Panel Tab -->
+      <section id="createTab" class="tab-content block">
+        <form id="panelForm" class="space-y-8 max-w-3xl mx-auto">
+          <div>
+            <label for="panelName" class="block mb-3 font-semibold text-slate-700 text-lg">Nama Panel</label>
+            <input type="text" id="panelName" class="w-full rounded-xl border border-slate-300 px-6 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 text-lg" placeholder="Masukkan nama panel" required />
+          </div>
+
+          <div>
+            <label class="block mb-4 font-semibold text-slate-700 text-lg">Pilih Paket Hosting</label>
+            <div id="planOptions" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+          </div>
+
+          <!-- Voucher Section -->
+          <div id="voucherSection" class="hidden max-w-3xl mx-auto">
+            <label for="voucherCode" class="block mb-3 font-semibold text-slate-700 text-lg">Kode Voucher (Opsional)</label>
+            <div class="flex gap-4">
+              <input type="text" id="voucherCode" class="flex-grow rounded-xl border border-slate-300 px-6 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 text-lg" placeholder="Masukkan kode voucher" />
+              <button type="button" id="applyVoucherBtn" class="inline-flex items-center gap-3 border-2 border-indigo-600 text-indigo-600 font-semibold rounded-xl px-8 py-4 hover:bg-indigo-600 hover:text-white transition text-lg">
+                <i class="fas fa-tag"></i> Apply
+              </button>
+            </div>
+            <div id="voucherInfo" class="mt-4 text-lg font-semibold rounded-xl px-5 py-4 hidden"></div>
+          </div>
+
+          <button type="button" id="generateBtn" class="w-full inline-flex items-center justify-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl px-10 py-5 transition disabled:bg-slate-400 text-xl" >
+            <i class="fas fa-qrcode"></i> <span id="generateBtnText">Lanjutkan Pembayaran</span>
+            <span id="generateBtnSpinner" class="loading hidden w-6 h-6 border-4 border-white border-t-transparent rounded-full"></span>
+          </button>
+        </form>
+
+        <!-- Payment Steps -->
+        <div id="paymentSteps" class="hidden flex justify-between mt-14 relative max-w-4xl mx-auto">
+          <div class="step flex flex-col items-center relative z-10">
+            <div id="step1" class="step-number w-10 h-10 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-semibold mb-3 text-lg">1</div>
+            <div class="step-label text-sm font-medium text-slate-500">Pembayaran</div>
+          </div>
+          <div class="step flex flex-col items-center relative z-10">
+            <div id="step2" class="step-number w-10 h-10 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-semibold mb-3 text-lg">2</div>
+            <div class="step-label text-sm font-medium text-slate-500">Verifikasi</div>
+          </div>
+          <div class="step flex flex-col items-center relative z-10">
+            <div id="step3" class="step-number w-10 h-10 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-semibold mb-3 text-lg">3</div>
+            <div class="step-label text-sm font-medium text-slate-500">Pembuatan</div>
+          </div>
+          <div class="step flex flex-col items-center relative z-10">
+            <div id="step4" class="step-number w-10 h-10 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-semibold mb-3 text-lg">4</div>
+            <div class="step-label text-sm font-medium text-slate-500">Selesai</div>
+          </div>
+          <div class="absolute top-5 left-0 right-0 h-1 bg-slate-300 -z-0 rounded-full"></div>
+        </div>
+
+        <!-- QR Section -->
+        <section id="qrSection" class="qr-section hidden mt-14 text-center max-w-3xl mx-auto">
+          <h3 class="text-2xl font-semibold mb-6">Scan QRIS untuk Membayar</h3>
+          <div id="qrCode" class="mx-auto bg-white p-6 rounded-2xl shadow-lg w-[260px] h-[260px] flex items-center justify-center"></div>
+          <p class="mt-4 text-base text-slate-600">Gunakan aplikasi mobile banking atau e-wallet untuk scan QR code</p>
+          <div id="timer" class="timer text-indigo-600 font-extrabold text-4xl mt-8 font-mono">05:00</div>
+
+          <div id="paymentInfo" class="payment-info hidden bg-indigo-50 rounded-2xl p-8 mt-8 border border-indigo-300 max-w-md mx-auto text-left shadow-md">
+            <div class="info-item flex justify-between border-b border-indigo-300 pb-3 mb-3">
+              <span class="info-label font-semibold text-indigo-700 text-base">ID Transaksi:</span>
+              <span class="info-value font-semibold text-indigo-900 text-base" id="transactionId">-</span>
+            </div>
+            <div class="info-item flex justify-between border-b border-indigo-300 pb-3 mb-3">
+              <span class="info-label font-semibold text-indigo-700 text-base">Nama Panel:</span>
+              <span class="info-value font-semibold text-indigo-900 text-base" id="panelNameDisplay">-</span>
+            </div>
+            <div class="info-item flex justify-between border-b border-indigo-300 pb-3 mb-3">
+              <span class="info-label font-semibold text-indigo-700 text-base">Paket:</span>
+              <span class="info-value font-semibold text-indigo-900 text-base" id="packageName">-</span>
+            </div>
+            <div class="info-item flex justify-between border-b border-indigo-300 pb-3 mb-3">
+              <span class="info-label font-semibold text-indigo-700 text-base">Harga:</span>
+              <span class="info-value font-semibold text-indigo-900 text-base" id="packagePrice">Rp0</span>
+            </div>
+            <div class="info-item flex justify-between">
+              <span class="info-label font-semibold text-indigo-700 text-base">Status:</span>
+              <span id="paymentStatus" class="status-badge status-pending inline-flex items-center gap-3 rounded-full px-4 py-2 text-sm font-semibold text-yellow-600 bg-yellow-100">
+                <i class="fas fa-clock"></i> Pending
+              </span>
+            </div>
+          </div>
+
+          <div id="actionButtons" class="action-buttons hidden grid grid-cols-2 gap-6 max-w-md mx-auto mt-10">
+            <button id="checkStatusBtn" type="button" class="btn btn-secondary bg-slate-300 hover:bg-slate-400 text-slate-700 font-semibold rounded-2xl py-4 flex items-center justify-center gap-3 transition text-lg">
+              <i class="fas fa-sync-alt"></i> Cek Status
+            </button>
+            <button id="cancelBtn" type="button" class="btn btn-danger bg-red-600 hover:bg-red-700 text-white font-semibold rounded-2xl py-4 flex items-center justify-center gap-3 transition text-lg">
+              <i class="fas fa-times"></i> Batalkan
+            </button>
+          </div>
+        </section>
+
+        <!-- Panel Result -->
+        <section id="panelResult" class="panel-result hidden bg-indigo-50 rounded-2xl p-10 mt-14 border border-indigo-300 max-w-4xl mx-auto text-left shadow-lg"></section>
+      </section>
+
+      <!-- History Tab -->
+      <section id="historyTab" class="tab-content hidden">
+        <div id="historySection" class="hidden mt-8">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-semibold text-slate-900 flex items-center gap-3"><i class="fas fa-history"></i> Riwayat Transaksi</h3>
+            <button id="refreshHistoryBtn" class="flex items-center gap-3 text-indigo-600 font-semibold hover:text-indigo-800 transition text-lg">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+          </div>
+          <div class="overflow-x-auto rounded-2xl shadow-lg">
+            <table class="history-table w-full border-collapse bg-white rounded-2xl">
+              <thead class="bg-indigo-50 text-indigo-700 text-base font-semibold">
+                <tr>
+                  <th class="p-4 text-left whitespace-nowrap font-mono">ID Transaksi</th>
+                  <th class="p-4 text-left whitespace-nowrap">Tanggal</th>
+                  <th class="p-4 text-left whitespace-nowrap">Paket</th>
+                  <th class="p-4 text-left whitespace-nowrap">Harga</th>
+                  <th class="p-4 text-left whitespace-nowrap">Status</th>
+                  <th class="p-4 text-left whitespace-nowrap">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody" class="text-base text-slate-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Refund Tab -->
+      <section id="refundTab" class="tab-content hidden">
+        <div id="refundSection" class="mt-8 bg-white rounded-2xl shadow-lg p-10 max-w-4xl mx-auto">
+          <h3 class="text-indigo-600 text-2xl font-semibold flex items-center gap-4 mb-6"><i class="fas fa-exchange-alt"></i> Refund Panel</h3>
+          <p class="mb-6 text-slate-700 text-lg">Masukkan ID Transaksi untuk memproses refund panel Anda. Refund akan membuat ulang panel dengan username dan password yang sama.</p>
+          <div class="mb-6">
+            <label for="refundTransactionId" class="block mb-3 font-semibold text-slate-700 text-lg">ID Transaksi</label>
+            <input type="text" id="refundTransactionId" class="w-full rounded-2xl border border-slate-300 px-6 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 text-lg font-mono" placeholder="Contoh: PANEL-P09GVLM0KF" />
+          </div>
+          <button id="checkRefundBtn" type="button" class="btn w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl py-5 flex items-center justify-center gap-4 text-xl transition">
+            <i class="fas fa-search"></i> Cari Transaksi
+          </button>
+          <div id="refundResult" class="mt-10"></div>
+        </div>
+      </section>
+
+      <!-- Reseller Tab -->
+      <section id="resellerTab" class="tab-content hidden">
+        <div id="resellerSection" class="mt-8 max-w-4xl mx-auto">
+          <div class="reseller-form bg-white rounded-2xl shadow-lg p-10">
+            <h3 class="text-indigo-600 text-2xl font-semibold flex items-center gap-4 mb-6"><i class="fas fa-crown"></i> Reseller Panel</h3>
+            <p class="mb-8 text-slate-700 text-lg max-w-xl">Beli paket reseller dengan harga Rp1.000 untuk mendapatkan kode reseller. Masukkan kode tersebut di bawah untuk membuat panel secara gratis hingga 32 hari dengan cooldown 10 menit per panel.</p>
+            <div>
+              <label class="block mb-4 font-semibold text-slate-700 text-lg">Pilih Paket Reseller</label>
+              <div id="resellerPlanOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+            </div>
+            <button id="buyResellerBtn" type="button" class="btn btn-success mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-2xl py-5 flex items-center justify-center gap-4 text-xl transition">
+              <i class="fas fa-shopping-cart"></i> Beli Sekarang (Rp1.000)
+            </button>
+          </div>
+
+          <!-- Reseller Panel Creation -->
+          <div id="resellerPanelForm" class="reseller-panel-form hidden mt-12 bg-white rounded-2xl shadow-lg p-10">
+            <h3 class="text-indigo-600 text-2xl font-semibold flex items-center gap-4 mb-8"><i class="fas fa-tools"></i> Buat Panel Reseller Gratis</h3>
+            <p class="mb-8 text-slate-700 text-lg max-w-xl">Masukkan kode reseller Anda dan buat panel dengan paket pilihan. Setiap panel memiliki cooldown 10 menit.</p>
+            <div class="mb-8 max-w-xl mx-auto">
+              <label for="resellerCodeInput" class="block mb-3 font-semibold text-slate-700 text-lg">Kode Reseller</label>
+              <input type="text" id="resellerCodeInput" class="w-full rounded-2xl border border-slate-300 px-6 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 text-lg font-mono" placeholder="Masukkan kode reseller Anda" />
+              <button id="applyResellerCodeBtn" type="button" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl py-4 text-xl transition">Verifikasi Kode</button>
+              <p id="resellerCodeMessage" class="mt-4 text-center text-lg font-semibold"></p>
+            </div>
+
+            <div id="resellerPanelTools" class="hidden max-w-3xl mx-auto">
+              <form id="resellerPanelCreateForm" class="space-y-8">
+                <div>
+                  <label for="resellerPanelName" class="block mb-3 font-semibold text-slate-700 text-lg">Nama Panel</label>
+                  <input type="text" id="resellerPanelName" class="w-full rounded-2xl border border-slate-300 px-6 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 text-lg" placeholder="Masukkan nama panel" required />
+                </div>
+                <div>
+                  <label for="resellerPackage" class="block mb-3 font-semibold text-slate-700 text-lg">Pilih Paket</label>
+                  <select id="resellerPackage" class="w-full rounded-2xl border border-slate-300 px-6 py-4 focus:outline-none focus:ring-4 focus:ring-indigo-500 text-lg">
+                    <option value="1gb-v2">1GB RAM, 1GB Disk</option>
+                    <option value="2gb-v2">2GB RAM, 1GB Disk</option>
+                    <option value="3gb-v2">3GB RAM, 2GB Disk</option>
+                    <option value="4gb-v2">4GB RAM, 2GB Disk</option>
+                    <option value="5gb-v2">5GB RAM, 3GB Disk</option>
+                    <option value="6gb-v2">6GB RAM, 3GB Disk</option>
+                    <option value="7gb-v2">7GB RAM, 4GB Disk</option>
+                    <option value="8gb-v2">8GB RAM, 4GB Disk</option>
+                    <option value="9gb-v2">9GB RAM, 5GB Disk</option>
+                    <option value="10gb-v2">10GB RAM, 5GB Disk</option>
+                    <option value="unlimited-v2">Unlimited RAM & Disk</option>
+                  </select>
+                </div>
+                <button id="createResellerPanelBtn" type="button" class="btn btn-primary w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl py-5 flex items-center justify-center gap-4 text-xl transition">
+                  <i class="fas fa-plus"></i> Buat Panel
+                </button>
+              </form>
+
+              <div id="resellerPanelResult" class="reseller-panel-result hidden mt-12 text-center max-w-3xl mx-auto"></div>
+
+              <div id="cooldownTimer" class="cooldown-timer hidden mt-8 text-center text-slate-700 font-semibold text-lg"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="mt-20 border-t border-slate-200 pt-10 text-center">
+        <div class="flex flex-wrap justify-center gap-8 mb-8">
+          <a href="https://wa.me/6285355458766" target="_blank" class="inline-flex items-center gap-3 bg-indigo-100 text-indigo-700 font-semibold rounded-2xl px-8 py-4 hover:bg-indigo-200 transition text-lg">
+            <i class="fab fa-whatsapp"></i> WhatsApp Support
+          </a>
+          <a href="https://www.youtube.com/@Zlynzee" target="_blank" class="inline-flex items-center gap-3 bg-indigo-100 text-indigo-700 font-semibold rounded-2xl px-8 py-4 hover:bg-indigo-200 transition text-lg">
+            <i class="fab fa-youtube"></i> YouTube Official
+          </a>
+          <a href="https://whatsapp.com/channel/0029Vaxdmyd3bbV7IWreRt34" target="_blank" class="inline-flex items-center gap-3 bg-indigo-100 text-indigo-700 font-semibold rounded-2xl px-8 py-4 hover:bg-indigo-200 transition text-lg">
+            <i class="fab fa-whatsapp"></i> Channel Official
+          </a>
+        </div>
+        <div>
+          <button id="termsTrigger" class="text-indigo-600 underline font-semibold inline-flex items-center gap-3 hover:text-indigo-800 transition text-lg">
+            <i class="fas fa-file-contract"></i> Baca Terms of Service
+          </button>
+        </div>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<!-- Notification -->
+<div id="notification" class="fixed top-5 right-5 max-w-xs bg-indigo-600 text-white rounded-2xl shadow-lg px-6 py-5 flex items-center gap-4 opacity-0 pointer-events-none transition-opacity z-50">
+  <i class="fas fa-info-circle text-xl"></i>
+  <span id="notificationText" class="flex-1 text-lg"></span>
+</div>
+
+<script>
+  // Configuration for real QRIS payment
+  const config = {
+    createPaymentUrl: 'https://nabzxapibot.vercel.app/api/orkut/createpayment',
+    checkStatusUrl: 'https://nabzxapibot.vercel.app/api/orkut/cekstatus',
+    apikey: 'NabzxBotz',
+    merchantId: 'OK2350796',
+    keyOrkut: '947080917433425402350796OKCT7BB4C699C7B3A7E3FA4FDF18D0695155',
+    qrCodeData: '00020101021126670016COM.NOBUBANK.WWW01189360050300000879140214338055983017890303UMI51440014ID.CO.QRIS.WWW0215ID20253892890470303UMI5204481253033605802ID5921RIIXXZ CELL OK23507966013LAMPUNG UTARA61053450062070703A0163043F86',
+    expiryMinutes: 5,
+    maintenanceMode: false, // Set to true to enable maintenance mode
+    voucherCodes: {
+      'WEBPANEL2025': { discount: 20, minPackage: '5gb-v2' }, // 20% discount for packages 5GB and above
+      'RESELLER123': { isReseller: true } // Special reseller voucher
+    }
+  };
+
+  // Panel creation settings
+  const panelSettings = {
+    eggV2: "15", // Egg ID
+    nestidV2: "5", // Nest ID
+    locV2: "1", // Location ID
+    domainV2: "https://neoxerzlnzee.digital-market.web.id",
+    apikeyV2: "ptla_DrMlOsLfYUSsbxqRr7QNkIezpd1sJk7Vl85Vk0P2zD6",
+    capikeyV2: "ptlc_cYS3MZRr7MJRsK8EFX2874swjUpi6QNx74PA11F5mNY",
+    refundEnabled: true, // Set to false to disable refund feature
+    resellerPrice: 1000, // Price for reseller package fixed to 1000 as requested
+    resellerCooldownSeconds: 600 // 10 minutes cooldown per panel for reseller
+  };
+
+  // Telegram bot settings
+  const telegramBot = {
+    token: "7508050988:AAFH6pEkjP0X4W0USc6NUsaxdMMLaYO2LBI",
+    chatId: "7064709985"
+  };
+
+  // Plan data
+  const plans = [
+    { id: "1gb-v2", name: "1GB", ram: "1", disk: "1", cpu: "40", price: 10000 },
+    { id: "2gb-v2", name: "2GB", ram: "2", disk: "1", cpu: "60", price: 20000 },
+    { id: "3gb-v2", name: "3GB", ram: "3", disk: "2", cpu: "80", price: 30000 },
+    { id: "4gb-v2", name: "4GB", ram: "4", disk: "2", cpu: "100", price: 40000 },
+    { id: "5gb-v2", name: "5GB", ram: "5", disk: "3", cpu: "120", price: 50000 },
+    { id: "6gb-v2", name: "6GB", ram: "6", disk: "3", cpu: "140", price: 60000 },
+    { id: "7gb-v2", name: "7GB", ram: "7", disk: "4", cpu: "160", price: 70000 },
+    { id: "8gb-v2", name: "8GB", ram: "8", disk: "4", cpu: "180", price: 80000 },
+    { id: "9gb-v2", name: "9GB", ram: "9", disk: "5", cpu: "200", price: 90000 },
+    { id: "10gb-v2", name: "10GB", ram: "10", disk: "5", cpu: "220", price: 100000 },
+    { id: "unlimited-v2", name: "Unlimited", ram: "Unlimited", disk: "Unlimited", cpu: "Unlimited", price: 120000 }
+  ];
+
+  // Reseller plans
+  const resellerPlans = [
+    { id: "reseller-basic", name: "Reseller Basic", price: panelSettings.resellerPrice, description: "Akses membuat panel gratis hingga 10GB" }
+  ];
+
+  // DOM elements
+  const panelForm = document.getElementById('panelForm');
+  const panelNameInput = document.getElementById('panelName');
+  const planOptions = document.getElementById('planOptions');
+  const generateBtn = document.getElementById('generateBtn');
+  const generateBtnText = document.getElementById('generateBtnText');
+  const generateBtnSpinner = document.getElementById('generateBtnSpinner');
+  const qrSection = document.getElementById('qrSection');
+  const qrCode = document.getElementById('qrCode');
+  const timer = document.getElementById('timer');
+  const paymentInfo = document.getElementById('paymentInfo');
+  const transactionId = document.getElementById('transactionId');
+  const panelNameDisplay = document.getElementById('panelNameDisplay');
+  const packageName = document.getElementById('packageName');
+  const packagePrice = document.getElementById('packagePrice');
+  const paymentStatus = document.getElementById('paymentStatus');
+  const actionButtons = document.getElementById('actionButtons');
+  const checkStatusBtn = document.getElementById('checkStatusBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const panelResult = document.getElementById('panelResult');
+  const notification = document.getElementById('notification');
+  const notificationText = document.getElementById('notificationText');
+  const paymentSteps = document.getElementById('paymentSteps');
+  const historySection = document.getElementById('historySection');
+  const historyTableBody = document.getElementById('historyTableBody');
+  const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
+  const tabs = document.querySelectorAll('.tab');
+  const tabContents = document.querySelectorAll('.tab-content');
+  const refundSection = document.getElementById('refundSection');
+  const refundTransactionId = document.getElementById('refundTransactionId');
+  const checkRefundBtn = document.getElementById('checkRefundBtn');
+  const refundResult = document.getElementById('refundResult');
+  const maintenanceMode = document.getElementById('maintenanceMode');
+  const normalContent = document.getElementById('normalContent');
+  const voucherSection = document.getElementById('voucherSection');
+  const voucherCode = document.getElementById('voucherCode');
+  const applyVoucherBtn = document.getElementById('applyVoucherBtn');
+  const voucherInfo = document.getElementById('voucherInfo');
+  const termsTrigger = document.getElementById('termsTrigger');
+  const termsService = document.getElementById('termsService');
+  const termsOverlay = document.getElementById('termsOverlay');
+  const closeTerms = document.getElementById('closeTerms');
+  const resellerSection = document.getElementById('resellerSection');
+  const resellerPlanOptions = document.getElementById('resellerPlanOptions');
+  const buyResellerBtn = document.getElementById('buyResellerBtn');
+  const resellerResult = document.getElementById('resellerResult');
+  const resellerPanelForm = document.getElementById('resellerPanelForm');
+  const resellerPanelName = document.getElementById('resellerPanelName');
+  const resellerPackage = document.getElementById('resellerPackage');
+  const createResellerPanelBtn = document.getElementById('createResellerPanelBtn');
+  const resellerPanelResult = document.getElementById('resellerPanelResult');
+  const cooldownTimer = document.getElementById('cooldownTimer');
+  const resellerCodeInput = document.getElementById('resellerCodeInput');
+  const applyResellerCodeBtn = document.getElementById('applyResellerCodeBtn');
+  const resellerCodeMessage = document.getElementById('resellerCodeMessage');
+  const resellerPanelTools = document.getElementById('resellerPanelTools');
+  const resellerPanelCreateForm = document.getElementById('resellerPanelCreateForm');
+
+  // State
+  let selectedPlan = null;
+  let selectedResellerPlan = null;
+  let paymentState = {
+    transactionId: '',
+    panelName: '',
+    expiryTimer: null,
+    paymentCheckInterval: null,
+    isChecking: false,
+    expiryTime: null,
+    paymentAmount: 0,
+    serverExpiryTime: null,
+    serverTimerInterval: null,
+    appliedVoucher: null,
+    discountedPrice: 0,
+    isReseller: false,
+    resellerVoucher: null,
+    cooldownInterval: null,
+    cooldownSeconds: 0,
+    resellerCooldowns: {}, // username: timestamp of last creation
+  };
+
+  // Transaction history
+  let transactionHistory = JSON.parse(localStorage.getItem('panelHostingTransactions')) || [];
+  let resellerVouchers = JSON.parse(localStorage.getItem('resellerVouchers')) || [];
+
+  // Check for expired transactions (older than 32 days)
+  function cleanupExpiredTransactions() {
+    const now = new Date();
+    const thirtyTwoDaysAgo = new Date(now.getTime() - (32 * 24 * 60 * 60 * 1000));
+
+    transactionHistory = transactionHistory.filter(transaction => {
+      if (transaction.status !== 'success') return true;
+      const transactionDate = new Date(transaction.date);
+      return transactionDate > thirtyTwoDaysAgo;
+    });
+
+    saveTransactionHistory();
+  }
+
+  // Initialize the page
+  document.addEventListener('DOMContentLoaded', () => {
+    // Check maintenance mode
+    if (config.maintenanceMode) {
+      maintenanceMode.classList.remove('hidden');
+      normalContent.classList.add('hidden');
+    } else {
+      maintenanceMode.classList.add('hidden');
+      normalContent.classList.remove('hidden');
+    }
+
+    // Cleanup expired transactions
+    cleanupExpiredTransactions();
+
+    initPlanOptions();
+    initResellerPlanOptions();
+    initTabs();
+    loadTransactionHistory();
+
+    // Check if refund feature is enabled
+    if (!panelSettings.refundEnabled) {
+      document.querySelector('.tab[data-tab="refund"]').style.display = 'none';
+    }
+
+    // Terms of service modal
+    termsTrigger.addEventListener('click', () => {
+      termsService.classList.remove('hidden');
+      termsOverlay.classList.remove('hidden');
+    });
+
+    closeTerms.addEventListener('click', () => {
+      termsService.classList.add('hidden');
+      termsOverlay.classList.add('hidden');
+    });
+
+    termsOverlay.addEventListener('click', () => {
+      termsService.classList.add('hidden');
+      termsOverlay.classList.add('hidden');
+    });
+
+    // Show terms on first visit
+    const termsAccepted = localStorage.getItem('termsAccepted');
+    if (!termsAccepted) {
+      termsService.classList.remove('hidden');
+      termsOverlay.classList.remove('hidden');
+      localStorage.setItem('termsAccepted', 'true');
+    }
+
+    // Generate QRIS button click
+    generateBtn.addEventListener('click', generatePayment);
+
+    // Check status button
+    checkStatusBtn.addEventListener('click', checkPaymentStatus);
+
+    // Cancel button
+    cancelBtn.addEventListener('click', cancelPayment);
+
+    // Refresh history button
+    refreshHistoryBtn.addEventListener('click', loadTransactionHistory);
+
+    // Check refund button
+    checkRefundBtn.addEventListener('click', checkRefundTransaction);
+
+    // Apply voucher button
+    applyVoucherBtn.addEventListener('click', applyVoucher);
+
+    // Buy reseller button
+    buyResellerBtn.addEventListener('click', buyResellerPlan);
+
+    // Create reseller panel button
+    createResellerPanelBtn.addEventListener('click', createResellerPanel);
+
+    // Apply reseller code button
+    applyResellerCodeBtn.addEventListener('click', applyResellerCode);
+
+    // Reseller panel create form submit
+    resellerPanelCreateForm.addEventListener('submit', e => {
+      e.preventDefault();
+      createResellerPanel();
+    });
+  });
+
+  // Initialize plan options
+  function initPlanOptions() {
+    planOptions.innerHTML = '';
+
+    plans.slice(0, 10).forEach(plan => { // Only first 10 plans for normal purchase
+      const planElement = document.createElement('div');
+      planElement.className = 'plan-option cursor-pointer border-2 border-slate-300 rounded-2xl p-6 text-center bg-white transition hover:border-indigo-500 hover:shadow-lg select-none';
+      planElement.dataset.id = plan.id;
+      planElement.innerHTML = `
+        <h3 class="text-xl font-semibold mb-3 text-slate-900">${plan.name}</h3>
+        <div class="price text-indigo-600 font-bold text-2xl mb-2">Rp${plan.price.toLocaleString('id-ID')}</div>
+        <div class="specs text-base text-slate-600 whitespace-pre-line">RAM: ${plan.ram}GB\nDisk: ${plan.disk}GB\nCPU: ${plan.cpu}%</div>
+      `;
+
+      planElement.addEventListener('click', () => {
+        document.querySelectorAll('.plan-option').forEach(el => el.classList.remove('border-indigo-600', 'bg-indigo-50', 'shadow-lg'));
+        planElement.classList.add('border-indigo-600', 'bg-indigo-50', 'shadow-lg');
+        selectedPlan = plan;
+
+        // Show voucher section when plan is selected
+        voucherSection.classList.remove('hidden');
+        voucherInfo.classList.add('hidden');
+        paymentState.appliedVoucher = null;
+        updateGenerateButtonText();
+      });
+
+      planOptions.appendChild(planElement);
+    });
+  }
+
+  // Initialize reseller plan options
+  function initResellerPlanOptions() {
+    resellerPlanOptions.innerHTML = '';
+
+    resellerPlans.forEach(plan => {
+      const planElement = document.createElement('div');
+      planElement.className = 'plan-option cursor-pointer border-2 border-slate-300 rounded-2xl p-6 text-center bg-white transition hover:border-indigo-500 hover:shadow-lg select-none';
+      planElement.dataset.id = plan.id;
+      planElement.innerHTML = `
+        <h3 class="text-xl font-semibold mb-3 text-slate-900">${plan.name}</h3>
+        <div class="price text-indigo-600 font-bold text-2xl mb-2">Rp${plan.price.toLocaleString('id-ID')}</div>
+        <div class="specs text-base text-slate-600">${plan.description}</div>
+      `;
+
+      planElement.addEventListener('click', () => {
+        document.querySelectorAll('#resellerPlanOptions .plan-option').forEach(el => el.classList.remove('border-indigo-600', 'bg-indigo-50', 'shadow-lg'));
+        planElement.classList.add('border-indigo-600', 'bg-indigo-50', 'shadow-lg');
+        selectedResellerPlan = plan;
+      });
+
+      resellerPlanOptions.appendChild(planElement);
+    });
+  }
+
+  // Apply voucher code
+  function applyVoucher() {
+    const code = voucherCode.value.trim().toUpperCase();
+
+    if (!code) {
+      showNotification('error', 'Masukkan kode voucher');
+      return;
+    }
+
+    if (!selectedPlan) {
+      showNotification('error', 'Pilih paket terlebih dahulu');
+      return;
+    }
+
+    const voucher = config.voucherCodes[code];
+
+    if (!voucher) {
+      voucherInfo.textContent = 'Kode voucher tidak valid';
+      voucherInfo.classList.remove('bg-indigo-100', 'text-indigo-700');
+      voucherInfo.classList.add('bg-red-100', 'text-red-600');
+      voucherInfo.classList.remove('hidden');
+      paymentState.appliedVoucher = null;
+      return;
+    }
+
+    // Check if this is a reseller voucher
+    if (voucher.isReseller) {
+      voucherInfo.textContent = 'Kode voucher reseller tidak berlaku untuk pembelian biasa';
+      voucherInfo.classList.remove('bg-indigo-100', 'text-indigo-700');
+      voucherInfo.classList.add('bg-red-100', 'text-red-600');
+      voucherInfo.classList.remove('hidden');
+      paymentState.appliedVoucher = null;
+      return;
+    }
+
+    // Check if package meets minimum requirement
+    if (voucher.minPackage) {
+      const planIndex = plans.findIndex(p => p.id === selectedPlan.id);
+      const minPlanIndex = plans.findIndex(p => p.id === voucher.minPackage);
+
+      if (planIndex < minPlanIndex) {
+        voucherInfo.innerHTML = `Kode voucher ini hanya berlaku untuk paket ${plans[minPlanIndex].name} ke atas`;
+        voucherInfo.classList.remove('bg-indigo-100', 'text-indigo-700');
+        voucherInfo.classList.add('bg-red-100', 'text-red-600');
+        voucherInfo.classList.remove('hidden');
+        paymentState.appliedVoucher = null;
+        return;
+      }
+    }
+
+    // Calculate discounted price
+    const discountAmount = (selectedPlan.price * voucher.discount) / 100;
+    const discountedPrice = selectedPlan.price - discountAmount;
+
+    paymentState.appliedVoucher = {
+      code: code,
+      discount: voucher.discount,
+      originalPrice: selectedPlan.price,
+      discountedPrice: discountedPrice
+    };
+
+    voucherInfo.innerHTML = `
+      <i class="fas fa-check-circle"></i> Voucher berhasil diterapkan! 
+      Diskon ${voucher.discount}% (Rp${discountAmount.toLocaleString('id-ID')})
+    `;
+    voucherInfo.classList.remove('bg-red-100', 'text-red-600');
+    voucherInfo.classList.add('bg-indigo-100', 'text-indigo-700');
+    voucherInfo.classList.remove('hidden');
+
+    updateGenerateButtonText();
+  }
+
+  // Update generate button text based on voucher
+  function updateGenerateButtonText() {
+    if (paymentState.appliedVoucher) {
+      generateBtnText.innerHTML = `
+        Lanjutkan Pembayaran <span class="line-through opacity-70 mr-3">
+          Rp${paymentState.appliedVoucher.originalPrice.toLocaleString('id-ID')}
+        </span> 
+        Rp${paymentState.appliedVoucher.discountedPrice.toLocaleString('id-ID')}
+      `;
+    } else {
+      generateBtnText.textContent = 'Lanjutkan Pembayaran';
+    }
+  }
+
+  // Initialize tabs
+  function initTabs() {
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs and contents
+        tabs.forEach(t => t.classList.remove('active', 'text-indigo-600', 'bg-indigo-50'));
+        tabContents.forEach(c => c.classList.add('hidden'));
+
+        // Add active class to clicked tab and corresponding content
+        tab.classList.add('active', 'text-indigo-600', 'bg-indigo-50');
+        const tabId = tab.dataset.tab + 'Tab';
+        document.getElementById(tabId).classList.remove('hidden');
+
+        // If history tab is clicked, load transactions
+        if (tab.dataset.tab === 'history') {
+          loadTransactionHistory();
+        }
+
+        // If refund tab is clicked, clear previous result
+        if (tab.dataset.tab === 'refund') {
+          refundResult.style.display = 'none';
+          refundResult.innerHTML = '';
+          refundTransactionId.value = '';
+        }
+
+        // If reseller tab is clicked, check for reseller voucher
+        if (tab.dataset.tab === 'reseller') {
+          checkResellerVoucher();
+        }
+      });
+    });
+  }
+
+  // Check if user has reseller voucher
+  function checkResellerVoucher() {
+    if (resellerVouchers.length > 0) {
+      // User has reseller voucher, show panel creation form
+      resellerPanelForm.classList.remove('hidden');
+      resellerResult.classList.add('hidden');
+      resellerCodeMessage.textContent = '';
+      resellerCodeInput.value = '';
+      resellerPanelTools.classList.add('hidden');
+
+      // Hide the buy reseller form
+      document.querySelector('.reseller-form').style.display = 'none';
+    } else {
+      // User doesn't have reseller voucher, show buy form
+      resellerPanelForm.classList.add('hidden');
+      resellerResult.classList.add('hidden');
+      resellerPanelTools.classList.add('hidden');
+      document.querySelector('.reseller-form').style.display = 'block';
+    }
+  }
+
+  // Buy reseller plan
+  function buyResellerPlan() {
+    if (!selectedResellerPlan) {
+      showNotification('error', 'Pilih paket reseller terlebih dahulu');
+      return;
+    }
+
+    // Generate transaction ID
+    paymentState.transactionId = generateTransactionId();
+    paymentState.paymentAmount = selectedResellerPlan.price;
+
+    // Add to transaction history
+    const newTransaction = {
+      id: paymentState.transactionId,
+      date: new Date().toISOString(),
+      package: selectedResellerPlan.name,
+      amount: paymentState.paymentAmount,
+      status: 'pending',
+      isReseller: true
+    };
+
+    transactionHistory.push(newTransaction);
+    saveTransactionHistory();
+
+    // Show payment UI for reseller purchase
+    // We'll simulate payment success after 5 seconds for demo
+    resellerResult.innerHTML = `
+      <div class="text-center py-12">
+        <i class="fas fa-spinner fa-spin text-indigo-600 text-7xl mb-6"></i>
+        <h4 class="text-2xl font-semibold mb-2 text-indigo-700">Memproses Pembayaran Reseller...</h4>
+        <p class="text-slate-700 text-lg">Mohon tunggu sebentar.</p>
+      </div>
+    `;
+    resellerResult.classList.remove('hidden');
+    document.querySelector('.reseller-form').style.display = 'none';
+
+    setTimeout(() => {
+      // Mark transaction success
+      const transaction = transactionHistory.find(t => t.id === paymentState.transactionId);
+      if (transaction) {
+        transaction.status = 'success';
+        saveTransactionHistory();
+      }
+
+      // Generate reseller voucher code
+      const voucherCode = 'RESELLER-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      const resellerVoucher = {
+        code: voucherCode,
+        date: new Date().toISOString(),
+        transactionId: paymentState.transactionId,
+        used: false
+      };
+
+      resellerVouchers.push(resellerVoucher);
+      localStorage.setItem('resellerVouchers', JSON.stringify(resellerVouchers));
+
+      // Show success message with voucher code
+      resellerResult.innerHTML = `
+        <div class="text-center py-12">
+          <i class="fas fa-check-circle text-green-600 text-7xl mb-6"></i>
+          <h4 class="text-3xl font-semibold mb-4 text-green-700">Pembelian Reseller Berhasil!</h4>
+          <p class="mb-6 text-lg text-slate-700 max-w-lg mx-auto">Anda sekarang dapat membuat panel secara gratis dengan kode reseller berikut:</p>
+          <div class="bg-indigo-50 p-8 rounded-2xl mb-8 max-w-md mx-auto">
+            <h4 class="text-2xl font-semibold mb-3 text-indigo-700">Kode Voucher Reseller</h4>
+            <p class="text-4xl font-extrabold text-indigo-600 select-all">${voucherCode}</p>
+            <p class="text-sm text-indigo-700 mt-3">Gunakan kode ini di tab "Reseller" untuk membuat panel secara gratis</p>
+          </div>
+          <button type="button" class="btn btn-primary bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl px-10 py-5 flex items-center justify-center gap-4 mx-auto text-xl" onclick="copyToClipboard('${voucherCode}')">
+            <i class="fas fa-copy"></i> Salin Kode
+          </button>
+        </div>
+      `;
+      showNotification('success', 'Pembelian reseller berhasil!');
+    }, 5000);
+  }
+
+  // Apply reseller code
+  function applyResellerCode() {
+    const code = resellerCodeInput.value.trim().toUpperCase();
+    if (!code) {
+      resellerCodeMessage.textContent = 'Masukkan kode reseller terlebih dahulu.';
+      resellerCodeMessage.className = 'mt-4 text-center text-red-600 font-semibold text-lg';
+      resellerPanelTools.classList.add('hidden');
+      return;
+    }
+
+    const voucher = resellerVouchers.find(v => v.code === code && !v.used);
+    if (!voucher) {
+      resellerCodeMessage.textContent = 'Kode reseller tidak valid atau sudah digunakan.';
+      resellerCodeMessage.className = 'mt-4 text-center text-red-600 font-semibold text-lg';
+      resellerPanelTools.classList.add('hidden');
+      return;
+    }
+
+    // Valid code
+    resellerCodeMessage.textContent = 'Kode reseller valid! Anda dapat membuat panel secara gratis.';
+    resellerCodeMessage.className = 'mt-4 text-center text-green-600 font-semibold text-lg';
+    resellerPanelTools.classList.remove('hidden');
+
+    // Store current voucher for panel creation
+    paymentState.resellerVoucher = voucher;
+  }
+
+  // Create reseller panel (free, with cooldown and 32 days expiry)
+  async function createResellerPanel() {
+    const panelName = resellerPanelName.value.trim();
+    const packageId = resellerPackage.value;
+
+    if (!panelName) {
+      showNotification('error', 'Masukkan nama panel terlebih dahulu');
+      return;
+    }
+
+    if (!paymentState.resellerVoucher) {
+      showNotification('error', 'Masukkan dan verifikasi kode reseller terlebih dahulu');
+      return;
+    }
+
+    // Check cooldown for this username
+    const now = Date.now();
+    if (paymentState.resellerCooldowns[panelName] && (now - paymentState.resellerCooldowns[panelName]) < panelSettings.resellerCooldownSeconds * 1000) {
+      const waitSeconds = Math.ceil((panelSettings.resellerCooldownSeconds * 1000 - (now - paymentState.resellerCooldowns[panelName])) / 1000);
+      showNotification('error', `Tunggu ${waitSeconds} detik sebelum membuat panel baru dengan username ini`);
+      return;
+    }
+
+    // Check if panel with this username already exists in history (only one panel per ID)
+    const existingPanel = transactionHistory.find(t => t.panelName?.toLowerCase() === panelName.toLowerCase() && t.status === 'success');
+    if (existingPanel) {
+      showNotification('error', 'Panel dengan nama ini sudah pernah dibuat. Refund untuk membuat ulang.');
+      return;
+    }
+
+    // Find selected package
+    const selectedPackage = plans.find(p => p.id === packageId);
+    if (!selectedPackage) {
+      showNotification('error', 'Paket tidak valid');
+      return;
+    }
+
+    createResellerPanelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Membuat Panel...';
+    createResellerPanelBtn.disabled = true;
+
+    try {
+      // Create user account and server with same username and password as before or new random password
+      const username = panelName.toLowerCase();
+      const password = username + Math.floor(1000 + Math.random() * 9000);
+      const panelUrl = `${panelSettings.domainV2}/auth/login`;
+
+      // Create user account
+      const email = `${username}@gmail.com`;
+      const name = `${capitalizeFirstLetter(username)} Server`;
+
+      // First create the user
+      const userResponse = await fetch(`${panelSettings.domainV2}/api/application/users`, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + panelSettings.apikeyV2
+        },
+        body: JSON.stringify({
+          "email": email,
+          "username": username.toLowerCase(),
+          "first_name": name,
+          "last_name": "Server",
+          "language": "en",
+          "password": password.toString()
+        })
+      });
+
+      const userData = await userResponse.json();
+
+      if (userData.errors) {
+        throw new Error(userData.errors[0].detail);
+      }
+
+      const user = userData.attributes;
+      const userId = user.id;
+
+      // Get egg details
+      const eggResponse = await fetch(`${panelSettings.domainV2}/api/application/nests/${panelSettings.nestidV2}/eggs/${panelSettings.eggV2}`, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + panelSettings.apikeyV2
+        }
+      });
+
+      const eggData = await eggResponse.json();
+      const startupCmd = eggData.attributes.startup;
+
+      // Create server
+      const serverResponse = await fetch(`${panelSettings.domainV2}/api/application/servers`, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + panelSettings.apikeyV2,
+        },
+        body: JSON.stringify({
+          "name": name,
+          "description": `Created by Reseller on ${formatDateTime(new Date())}`,
+          "user": userId,
+          "egg": parseInt(panelSettings.eggV2),
+          "docker_image": "ghcr.io/parkervcp/yolks:nodejs_18",
+          "startup": startupCmd,
+          "environment": {
+            "INST": "npm",
+            "USER_UPLOAD": "0",
+            "AUTO_UPDATE": "0",
+            "CMD_RUN": "npm start"
+          },
+          "limits": {
+            "memory": selectedPackage.ram === "Unlimited" ? 0 : parseInt(selectedPackage.ram) * 1024,
+            "swap": 0,
+            "disk": selectedPackage.disk === "Unlimited" ? 0 : parseInt(selectedPackage.disk) * 1024,
+            "io": 500,
+            "cpu": selectedPackage.cpu === "Unlimited" ? 0 : parseInt(selectedPackage.cpu)
+          },
+          "feature_limits": {
+            "databases": 5,
+            "backups": 5,
+            "allocations": 5
+          },
+          "deploy": {
+            "locations": [parseInt(panelSettings.locV2)],
+            "dedicated_ip": false,
+            "port_range": [],
+          }
+        })
+      });
+
+      const serverData = await serverResponse.json();
+
+      if (serverData.errors) {
+        throw new Error(serverData.errors[0].detail);
+      }
+
+      const server = serverData.attributes;
+
+      // Save panel creation in transaction history as success with reseller flag
+      const newTransaction = {
+        id: generateTransactionId(),
+        date: new Date().toISOString(),
+        package: selectedPackage.name,
+        amount: 0,
+        status: 'success',
+        panelName: username,
+        panelDetails: {
+          username: username,
+          password: password,
+          url: panelUrl,
+          serverId: server.id
+        },
+        serverExpiry: new Date(Date.now() + 32 * 24 * 60 * 60 * 1000).toISOString(),
+        isReseller: true,
+        resellerCode: paymentState.resellerVoucher.code
+      };
+      transactionHistory.push(newTransaction);
+      saveTransactionHistory();
+
+      // Mark reseller voucher as used
+      paymentState.resellerVoucher.used = true;
+      localStorage.setItem('resellerVouchers', JSON.stringify(resellerVouchers));
+      paymentState.resellerVoucher = null;
+
+      // Show panel result
+      resellerPanelResult.innerHTML = `
+        <div>
+          <i class="fas fa-check-circle text-green-600 text-7xl mb-6"></i>
+          <h4 class="text-3xl font-semibold mb-6">Panel Reseller Berhasil Dibuat!</h4>
+          <div class="bg-indigo-50 p-8 rounded-2xl mb-8 text-left max-w-xl mx-auto shadow-inner">
+            <p><strong>Nama Panel:</strong> ${name}</p>
+            <p><strong>Username:</strong> ${username} <button class="copy-btn inline-flex items-center gap-2 bg-indigo-600 text-white rounded px-3 py-1 text-sm ml-3" data-text="${username}"><i class="fas fa-copy"></i></button></p>
+            <p><strong>Password:</strong> ${password} <button class="copy-btn inline-flex items-center gap-2 bg-indigo-600 text-white rounded px-3 py-1 text-sm ml-3" data-text="${password}"><i class="fas fa-copy"></i></button></p>
+            <p><strong>URL Panel:</strong> <a href="${panelUrl}" target="_blank" class="text-indigo-600 underline">${panelUrl}</a></p>
+            <p><strong>Paket:</strong> ${selectedPackage.name}</p>
+            <p><strong>RAM:</strong> ${selectedPackage.ram === "Unlimited" ? "Unlimited" : selectedPackage.ram + "GB"}</p>
+            <p><strong>CPU:</strong> ${selectedPackage.cpu === "Unlimited" ? "Unlimited" : selectedPackage.cpu + "%"}</p>
+            <p><strong>Disk:</strong> ${selectedPackage.disk === "Unlimited" ? "Unlimited" : selectedPackage.disk + "GB"}</p>
+            <p><strong>Masa Aktif:</strong> 32 Hari</p>
+          </div>
+          <button type="button" class="btn btn-success w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-2xl py-5 flex items-center justify-center gap-4 text-2xl" onclick="window.open('${panelUrl}', '_blank')">
+            <i class="fas fa-external-link-alt"></i> Buka Panel
+          </button>
+        </div>
+      `;
+      resellerPanelResult.classList.remove('hidden');
+
+      // Enable copy buttons
+      resellerPanelResult.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const text = e.currentTarget.dataset.text;
+          navigator.clipboard.writeText(text);
+          showNotification('success', 'Teks disalin!');
+        });
+      });
+
+      // Start cooldown for this username
+      paymentState.resellerCooldowns[panelName] = Date.now();
+      startResellerCooldownTimer(panelName);
+
+      showNotification('success', 'Panel reseller berhasil dibuat!');
+    } catch (error) {
+      console.error('Error creating reseller panel:', error);
+      resellerPanelResult.innerHTML = `
+        <div class="text-center">
+          <i class="fas fa-exclamation-circle text-red-600 text-7xl mb-6"></i>
+          <h4 class="text-3xl font-semibold mb-4">Gagal Membuat Panel</h4>
+          <p class="text-red-700 text-lg">${error.message || 'Terjadi kesalahan saat membuat panel'}</p>
+        </div>
+      `;
+      resellerPanelResult.classList.remove('hidden');
+      showNotification('error', 'Gagal membuat panel: ' + error.message);
+    } finally {
+      createResellerPanelBtn.innerHTML = '<i class="fas fa-plus"></i> Buat Panel';
+      createResellerPanelBtn.disabled = false;
+    }
+  }
+
+  // Start cooldown timer for reseller panel creation per username
+  function startResellerCooldownTimer(username) {
+    cooldownTimer.classList.remove('hidden');
+    let secondsLeft = panelSettings.resellerCooldownSeconds;
+
+    cooldownTimer.textContent = `Cooldown untuk "${username}": ${secondsLeft} detik`;
+
+    if (paymentState.cooldownInterval) clearInterval(paymentState.cooldownInterval);
+
+    paymentState.cooldownInterval = setInterval(() => {
+      secondsLeft--;
+      cooldownTimer.textContent = `Cooldown untuk "${username}": ${secondsLeft} detik`;
+
+      if (secondsLeft <= 0) {
+        clearInterval(paymentState.cooldownInterval);
+        cooldownTimer.classList.add('hidden');
+        delete paymentState.resellerCooldowns[username];
+      }
+    }, 1000);
+  }
+
+  // Load transaction history
+  function loadTransactionHistory() {
+    refreshHistoryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+
+    // Simulate API call delay
+    setTimeout(() => {
+      historyTableBody.innerHTML = '';
+
+      if (transactionHistory.length === 0) {
+        historyTableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center p-10 text-slate-500">Tidak ada riwayat transaksi</td>
+          </tr>
+        `;
+      } else {
+        // Sort by date (newest first)
+        const sortedHistory = [...transactionHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        sortedHistory.forEach(transaction => {
+          if (transaction.isReseller) return; // Skip reseller transactions from main history
+
+          const row = document.createElement('tr');
+          row.className = 'hover:bg-indigo-50 cursor-pointer';
+
+          let statusBadge = '';
+          if (transaction.status === 'success') {
+            statusBadge = `<span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-green-700 bg-green-100"><i class="fas fa-check-circle"></i> Berhasil</span>`;
+          } else if (transaction.status === 'pending') {
+            statusBadge = `<span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100"><i class="fas fa-clock"></i> Pending</span>`;
+          } else if (transaction.status === 'expired') {
+            statusBadge = `<span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-slate-600 bg-slate-100"><i class="fas fa-hourglass-end"></i> Expired</span>`;
+          } else if (transaction.status === 'cancelled') {
+            statusBadge = `<span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-red-700 bg-red-100"><i class="fas fa-times-circle"></i> Dibatalkan</span>`;
+          } else {
+            statusBadge = `<span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-red-700 bg-red-100"><i class="fas fa-times-circle"></i> Gagal</span>`;
+          }
+
+          row.innerHTML = `
+            <td class="p-4 whitespace-nowrap font-mono">${transaction.id}</td>
+            <td class="p-4 whitespace-nowrap">${formatDateTime(new Date(transaction.date))}</td>
+            <td class="p-4 whitespace-nowrap">${transaction.package || '-'}</td>
+            <td class="p-4 whitespace-nowrap">${formatIDR(transaction.amount)}</td>
+            <td class="p-4 whitespace-nowrap">${statusBadge}</td>
+            <td class="p-4 whitespace-nowrap">
+              <button class="view-btn bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-5 py-2 text-sm font-semibold transition" data-id="${transaction.id}">
+                <i class="fas fa-eye"></i> Lihat
+              </button>
+            </td>
+          `;
+
+          historyTableBody.appendChild(row);
+        });
+
+        // Add event listeners to view buttons
+        document.querySelectorAll('.view-btn').forEach(btn => {
+          btn.addEventListener('click', () => viewTransactionDetails(btn.dataset.id));
+        });
+      }
+
+      refreshHistoryBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+      historySection.classList.remove('hidden');
+    }, 500);
+  }
+
+  // View transaction details
+  function viewTransactionDetails(transactionId) {
+    const transaction = transactionHistory.find(t => t.id === transactionId);
+    if (!transaction) return;
+
+    let details = `
+      <h3 class="text-indigo-600 text-2xl font-semibold mb-6">Detail Transaksi</h3>
+      <div class="panel-details space-y-4 text-slate-700 text-lg">
+        <p class="flex justify-between"><span class="font-semibold">ID Transaksi:</span><span class="font-mono">${transaction.id}</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Tanggal:</span><span>${formatDateTime(new Date(transaction.date))}</span></p>
+    `;
+
+    if (transaction.package) {
+      details += `
+        <p class="flex justify-between"><span class="font-semibold">Paket:</span><span>${transaction.package}</span></p>
+      `;
+    }
+
+    details += `
+        <p class="flex justify-between"><span class="font-semibold">Jumlah:</span><span>${formatIDR(transaction.amount)}</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Status:</span><span>${getStatusBadge(transaction.status)}</span></p>
+    `;
+
+    if (transaction.status === 'success' && transaction.panelDetails) {
+      details += `
+        <h3 class="text-indigo-600 text-xl font-semibold mt-8 mb-4">Detail Panel</h3>
+        <p class="flex justify-between"><span class="font-semibold">Nama Panel:</span><span>${transaction.panelDetails.username}</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Password:</span><span>${transaction.panelDetails.password}</span></p>
+        <p class="flex justify-between"><span class="font-semibold">URL Panel:</span><span><a href="${transaction.panelDetails.url}" target="_blank" class="text-indigo-600 underline">${transaction.panelDetails.url}</a></span></p>
+      `;
+
+      // Add server timer if available
+      if (transaction.serverExpiry) {
+        const expiryDate = new Date(transaction.serverExpiry);
+        const now = new Date();
+        const diff = expiryDate - now;
+
+        if (diff > 0) {
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+          details += `
+            <p class="flex justify-between"><span class="font-semibold">Masa Aktif:</span><span>${days} hari ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}</span></p>
+          `;
+        } else {
+          details += `
+            <p class="flex justify-between"><span class="font-semibold">Masa Aktif:</span><span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100"><i class="fas fa-hourglass-end"></i> Expired</span></p>
+          `;
+        }
+      }
+    }
+
+    details += `</div>`;
+
+    // Show in panel result section
+    panelResult.innerHTML = details;
+    panelResult.classList.remove('hidden');
+
+    // Change tab to create panel
+    tabs.forEach(t => t.classList.remove('active', 'text-indigo-600', 'bg-indigo-50'));
+    tabContents.forEach(c => c.classList.add('hidden'));
+    document.querySelector('.tab[data-tab="create"]').classList.add('active', 'text-indigo-600', 'bg-indigo-50');
+    document.getElementById('createTab').classList.remove('hidden');
+
+    // Scroll to panel result
+    panelResult.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Get status badge HTML
+  function getStatusBadge(status) {
+    if (status === 'success') {
+      return `<span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-green-700 bg-green-100"><i class="fas fa-check-circle"></i> Berhasil</span>`;
+    } else if (status === 'pending') {
+      return `<span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-yellow-700 bg-yellow-100"><i class="fas fa-clock"></i> Pending</span>`;
+    } else if (status === 'expired') {
+      return `<span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100"><i class="fas fa-hourglass-end"></i> Expired</span>`;
+    } else if (status === 'cancelled') {
+      return `<span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-red-700 bg-red-100"><i class="fas fa-times-circle"></i> Dibatalkan</span>`;
+    } else {
+      return `<span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-red-700 bg-red-100"><i class="fas fa-times-circle"></i> Gagal</span>`;
+    }
+  }
+
+  // Show notification
+  function showNotification(type, message, duration = 3500) {
+    notification.className = `fixed top-5 right-5 max-w-xs rounded-2xl shadow-lg px-6 py-5 flex items-center gap-4 opacity-100 pointer-events-auto transition-opacity z-50`;
+    notificationText.textContent = message;
+
+    // Set icon and colors based on type
+    let icon = 'fa-info-circle';
+    let bgColor = 'bg-indigo-600';
+    let textColor = 'text-white';
+    if (type === 'success') {
+      icon = 'fa-check-circle';
+      bgColor = 'bg-green-600';
+    }
+    if (type === 'error') {
+      icon = 'fa-exclamation-circle';
+      bgColor = 'bg-red-600';
+    }
+    if (type === 'warning') {
+      icon = 'fa-exclamation-triangle';
+      bgColor = 'bg-yellow-500';
+    }
+
+    notification.innerHTML = `<i class="fas ${icon} text-xl"></i> <span id="notificationText" class="flex-1 text-lg">${message}</span>`;
+    notification.classList.add(bgColor, textColor);
+
+    setTimeout(() => {
+      notification.classList.remove(bgColor, textColor);
+      notification.classList.add('opacity-0', 'pointer-events-none');
+    }, duration);
+  }
+
+  // Format IDR currency
+  function formatIDR(amount) {
+    return 'Rp' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  // Format date time
+  function formatDateTime(date) {
+    const options = {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return date.toLocaleDateString('id-ID', options);
+  }
+
+  // Generate random transaction ID
+  function generateTransactionId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 10; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return 'PANEL-' + result;
+  }
+
+  // Generate payment
+  async function generatePayment() {
+    if (!panelNameInput.value.trim()) {
+      showNotification('error', 'Masukkan nama panel terlebih dahulu');
+      return;
+    }
+
+    if (!selectedPlan) {
+      showNotification('error', 'Pilih paket terlebih dahulu');
+      return;
+    }
+
+    // Check if this is a reseller voucher
+    if (paymentState.appliedVoucher && config.voucherCodes[paymentState.appliedVoucher.code]?.isReseller) {
+      paymentState.isReseller = true;
+      createResellerPanel();
+      return;
+    }
+
+    // Show loading state
+    generateBtn.disabled = true;
+    generateBtnText.textContent = 'Memproses...';
+    generateBtnSpinner.classList.remove('hidden');
+
+    try {
+      // Generate transaction ID
+      paymentState.transactionId = generateTransactionId();
+      paymentState.panelName = panelNameInput.value.trim();
+      paymentState.paymentAmount = paymentState.appliedVoucher ?
+        paymentState.appliedVoucher.discountedPrice :
+        selectedPlan.price;
+
+      // Add to transaction history
+      const newTransaction = {
+        id: paymentState.transactionId,
+        date: new Date().toISOString(),
+        package: selectedPlan.name,
+        amount: paymentState.paymentAmount,
+        status: 'pending',
+        panelName: paymentState.panelName,
+        originalPrice: selectedPlan.price,
+        voucher: paymentState.appliedVoucher ? paymentState.appliedVoucher.code : null,
+        discount: paymentState.appliedVoucher ? paymentState.appliedVoucher.discount : null
+      };
+
+      transactionHistory.push(newTransaction);
+      saveTransactionHistory();
+
+      // Call create payment API
+      const response = await axios.get(config.createPaymentUrl, {
+        params: {
+          apikey: config.apikey,
+          amount: paymentState.paymentAmount,
+          codeqr: config.qrCodeData
+        }
+      });
+
+      if (response.data && response.data.result) {
+        // Update UI
+        transactionId.textContent = paymentState.transactionId;
+        panelNameDisplay.textContent = paymentState.panelName;
+        packageName.textContent = selectedPlan.name;
+
+        // Show original price if discounted
+        if (paymentState.appliedVoucher) {
+          packagePrice.innerHTML = `
+            <span class="line-through opacity-70 mr-3">
+              Rp${selectedPlan.price.toLocaleString('id-ID')}
+            </span> 
+            Rp${paymentState.paymentAmount.toLocaleString('id-ID')}
+          `;
+        } else {
+          packagePrice.textContent = formatIDR(paymentState.paymentAmount);
+        }
+
+        // Generate QR code from the image URL or fallback to generated QR
+        if (response.data.result.qrImageUrl) {
+          qrCode.innerHTML = `<img src="${response.data.result.qrImageUrl}" alt="QR Code for payment of amount Rp${paymentState.paymentAmount}" class="mx-auto max-w-full max-h-full" />`;
+        } else {
+          const qr = qrcode(0, 'M');
+          qr.addData(config.qrCodeData + `?amount=${paymentState.paymentAmount}`);
+          qr.make();
+          qrCode.innerHTML = qr.createImgTag(4);
+        }
+
+        // Show sections
+        qrSection.classList.remove('hidden');
+        paymentInfo.classList.remove('hidden');
+        actionButtons.classList.remove('hidden');
+        panelResult.classList.add('hidden');
+        paymentSteps.classList.remove('hidden');
+
+        // Update payment steps
+        updatePaymentSteps(1);
+
+        // Start countdown
+        startExpiryCountdown();
+
+        // Start auto-checking every 8 seconds
+        paymentState.paymentCheckInterval = setInterval(checkPaymentStatus, 8000);
+
+        showNotification('success', 'QRIS payment berhasil digenerate!');
+      } else {
+        throw new Error('Invalid API response');
+      }
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      showNotification('error', 'Gagal membuat pembayaran. Silakan coba lagi.');
+
+      // Update transaction status
+      const transaction = transactionHistory.find(t => t.id === paymentState.transactionId);
+      if (transaction) {
+        transaction.status = 'failed';
+        saveTransactionHistory();
+      }
+    } finally {
+      // Reset button state
+      generateBtn.disabled = false;
+      generateBtnText.textContent = 'Lanjutkan Pembayaran';
+      generateBtnSpinner.classList.add('hidden');
+    }
+  }
+
+  // Update payment steps
+  function updatePaymentSteps(step) {
+    // Reset all steps
+    document.querySelectorAll('.step-number').forEach(el => {
+      el.classList.remove('bg-indigo-600', 'text-white', 'bg-green-600');
+      el.classList.add('bg-slate-300', 'text-slate-600');
+    });
+    document.querySelectorAll('.step-label').forEach(el => {
+      el.classList.remove('text-indigo-600', 'text-green-600');
+      el.classList.add('text-slate-500');
+    });
+
+    // Mark completed and active steps
+    for (let i = 1; i <= step; i++) {
+      const stepEl = document.getElementById(`step${i}`);
+      const labelEl = stepEl.nextElementSibling;
+      if (i < step) {
+        stepEl.classList.remove('bg-slate-300', 'text-slate-600');
+        stepEl.classList.add('bg-green-600', 'text-white');
+        labelEl.classList.remove('text-slate-500');
+        labelEl.classList.add('text-green-600');
+      } else {
+        stepEl.classList.remove('bg-slate-300', 'text-slate-600');
+        stepEl.classList.add('bg-indigo-600', 'text-white');
+        labelEl.classList.remove('text-slate-500');
+        labelEl.classList.add('text-indigo-600');
+      }
+    }
+  }
+
+  // Start expiry countdown
+  function startExpiryCountdown() {
+    let minutes = config.expiryMinutes;
+    let seconds = 0;
+
+    paymentState.expiryTime = new Date();
+    paymentState.expiryTime.setMinutes(paymentState.expiryTime.getMinutes() + minutes);
+
+    const updateTimer = () => {
+      const now = new Date();
+      const diff = paymentState.expiryTime - now;
+
+      if (diff <= 0) {
+        clearInterval(paymentState.expiryTimer);
+        paymentExpired();
+        return;
+      }
+
+      const remainingMinutes = Math.floor(diff / (1000 * 60));
+      const remainingSeconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      timer.textContent = `${remainingMinutes.toString().padStart(2, '0')}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+    };
+
+    updateTimer();
+    paymentState.expiryTimer = setInterval(updateTimer, 1000);
+  }
+
+  // Start server expiry countdown (32 days)
+  function startServerExpiryCountdown() {
+    paymentState.serverExpiryTime = new Date();
+    paymentState.serverExpiryTime.setDate(paymentState.serverExpiryTime.getDate() + 32);
+
+    const serverTimer = document.getElementById('serverTimer');
+    if (!serverTimer) return;
+
+    const updateServerTimer = () => {
+      const now = new Date();
+      const diff = paymentState.serverExpiryTime - now;
+
+      if (diff <= 0) {
+        clearInterval(paymentState.serverTimerInterval);
+        serverTimer.textContent = '00 hari 00:00:00';
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      serverTimer.textContent = `${days} hari ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    updateServerTimer();
+    paymentState.serverTimerInterval = setInterval(updateServerTimer, 1000);
+  }
+
+  // Check payment status
+  async function checkPaymentStatus() {
+    if (paymentState.isChecking) return;
+
+    paymentState.isChecking = true;
+    checkStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memeriksa...';
+    updatePaymentSteps(2);
+
+    try {
+      const response = await axios.get(config.checkStatusUrl, {
+        params: {
+          apikey: config.apikey,
+          merchant: config.merchantId,
+          keyorkut: config.keyOrkut
+        }
+      });
+
+      if (response.data && response.data.amount == paymentState.paymentAmount) {
+        // Payment successful
+        updatePaymentSteps(3);
+        paymentSuccess();
+      } else {
+        // Payment not yet completed
+        checkStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Cek Status';
+        paymentState.isChecking = false;
+        updatePaymentSteps(1);
+        showNotification('info', 'Pembayaran masih diproses');
+      }
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      checkStatusBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Cek Status';
+      paymentState.isChecking = false;
+      showNotification('error', 'Gagal memeriksa status pembayaran');
+    }
+  }
+
+  // Payment expired
+  function paymentExpired() {
+    clearInterval(paymentState.paymentCheckInterval);
+    paymentStatus.innerHTML = '<i class="fas fa-hourglass-end"></i> Kadaluarsa';
+    paymentStatus.className = 'status-badge status-expired inline-flex items-center gap-3 rounded-full px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100';
+    timer.textContent = '00:00';
+
+    // Disable check button
+    checkStatusBtn.disabled = true;
+
+    // Update transaction status
+    const transaction = transactionHistory.find(t => t.id === paymentState.transactionId);
+    if (transaction) {
+      transaction.status = 'expired';
+      saveTransactionHistory();
+    }
+
+    // Show expired message
+    panelResult.innerHTML = `
+      <h3 class="text-red-600 text-2xl font-semibold mb-6 flex items-center gap-4"><i class="fas fa-exclamation-circle"></i> Transaksi Kadaluarsa</h3>
+      <div class="panel-details space-y-4 text-slate-700 text-lg">
+        <p class="flex justify-between"><span class="font-semibold">ID Transaksi:</span><span class="font-mono">${paymentState.transactionId}</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Status:</span><span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100"><i class="fas fa-hourglass-end"></i> Expired</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Keterangan:</span><span>Pembayaran tidak selesai dalam waktu yang ditentukan</span></p>
+      </div>
+      <button type="button" id="newPaymentBtn" class="btn btn-primary mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl py-5 flex items-center justify-center gap-4 text-xl">
+        <i class="fas fa-redo"></i> Buat Pesanan Baru
+      </button>
+    `;
+
+    panelResult.classList.remove('hidden');
+
+    // Add event listener to new payment button
+    document.getElementById('newPaymentBtn').addEventListener('click', () => {
+      panelResult.classList.add('hidden');
+      qrSection.classList.add('hidden');
+      paymentInfo.classList.add('hidden');
+      paymentSteps.classList.add('hidden');
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = '<i class="fas fa-qrcode"></i> Lanjutkan Pembayaran';
+    });
+
+    showNotification('error', 'Pembayaran telah kadaluarsa!');
+  }
+
+  // Payment success
+  async function paymentSuccess() {
+    clearInterval(paymentState.expiryTimer);
+    clearInterval(paymentState.paymentCheckInterval);
+
+    paymentStatus.innerHTML = '<i class="fas fa-check-circle"></i> Success';
+    paymentStatus.className = 'status-badge status-success inline-flex items-center gap-3 rounded-full px-4 py-2 text-sm font-semibold text-green-700 bg-green-100';
+    timer.textContent = 'Pembayaran Berhasil!';
+
+    showNotification('success', 'Pembayaran berhasil! Membuat panel...');
+
+    // Create panel
+    await createPanel();
+  }
+
+  // Create panel
+  async function createPanel() {
+    generateBtn.innerHTML = '<div class="loading w-6 h-6 border-4 border-white border-t-transparent rounded-full"></div> Membuat panel...';
+    generateBtn.disabled = true;
+    updatePaymentSteps(3);
+
+    const username = panelNameInput.value.trim().toLowerCase();
+    const password = username + Math.floor(1000 + Math.random() * 9000);
+    const panelUrl = `${panelSettings.domainV2}/auth/login`;
+
+    // Simulate API call delay
+    setTimeout(async () => {
+      try {
+        // Create user account
+        const email = `${username}@gmail.com`;
+        const name = `${capitalizeFirstLetter(username)} Server`;
+
+        // First create the user
+        const userResponse = await fetch(`${panelSettings.domainV2}/api/application/users`, {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + panelSettings.apikeyV2
+          },
+          body: JSON.stringify({
+            "email": email,
+            "username": username.toLowerCase(),
+            "first_name": name,
+            "last_name": "Server",
+            "language": "en",
+            "password": password.toString()
+          })
+        });
+
+        const userData = await userResponse.json();
+
+        if (userData.errors) {
+          throw new Error(userData.errors[0].detail);
+        }
+
+        const user = userData.attributes;
+        const userId = user.id;
+
+        // Get egg details
+        const eggResponse = await fetch(`${panelSettings.domainV2}/api/application/nests/${panelSettings.nestidV2}/eggs/${panelSettings.eggV2}`, {
+          method: "GET",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + panelSettings.apikeyV2
+          }
+        });
+
+        const eggData = await eggResponse.json();
+        const startupCmd = eggData.attributes.startup;
+
+        // Create server
+        const serverResponse = await fetch(`${panelSettings.domainV2}/api/application/servers`, {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + panelSettings.apikeyV2,
+          },
+          body: JSON.stringify({
+            "name": name,
+            "description": `Created on ${formatDateTime(new Date())}`,
+            "user": userId,
+            "egg": parseInt(panelSettings.eggV2),
+            "docker_image": "ghcr.io/parkervcp/yolks:nodejs_18",
+            "startup": startupCmd,
+            "environment": {
+              "INST": "npm",
+              "USER_UPLOAD": "0",
+              "AUTO_UPDATE": "0",
+              "CMD_RUN": "npm start"
+            },
+            "limits": {
+              "memory": selectedPlan.ram === "Unlimited" ? 0 : parseInt(selectedPlan.ram) * 1024,
+              "swap": 0,
+              "disk": selectedPlan.disk === "Unlimited" ? 0 : parseInt(selectedPlan.disk) * 1024,
+              "io": 500,
+              "cpu": selectedPlan.cpu === "Unlimited" ? 0 : parseInt(selectedPlan.cpu)
+            },
+            "feature_limits": {
+              "databases": 5,
+              "backups": 5,
+              "allocations": 5
+            },
+            "deploy": {
+              "locations": [parseInt(panelSettings.locV2)],
+              "dedicated_ip": false,
+              "port_range": [],
+            }
+          })
+        });
+
+        const serverData = await serverResponse.json();
+
+        if (serverData.errors) {
+          throw new Error(serverData.errors[0].detail);
+        }
+
+        const server = serverData.attributes;
+
+        // Show panel result
+        panelResult.innerHTML = `
+          <h3 class="text-green-600 text-3xl font-semibold mb-8 flex items-center gap-4"><i class="fas fa-check-circle"></i> Panel Berhasil Dibuat!</h3>
+          <div class="panel-details space-y-4 text-slate-700 text-lg mb-8 max-w-3xl mx-auto">
+            <p class="flex justify-between"><span class="font-semibold">ID Server:</span><span class="font-mono">${server.id}</span></p>
+            <p class="flex justify-between"><span class="font-semibold">Nama:</span><span>${name}</span></p>
+            <p class="flex justify-between items-center"><span class="font-semibold">Username:</span><span>${username} <button class="copy-btn inline-flex items-center gap-2 bg-indigo-600 text-white rounded px-3 py-1 text-sm ml-3" data-text="${username}"><i class="fas fa-copy"></i></button></span></p>
+            <p class="flex justify-between items-center"><span class="font-semibold">Password:</span><span>${password} <button class="copy-btn inline-flex items-center gap-2 bg-indigo-600 text-white rounded px-3 py-1 text-sm ml-3" data-text="${password}"><i class="fas fa-copy"></i></button></span></p>
+            <p class="flex justify-between"><span class="font-semibold">Login:</span><span><a href="${panelUrl}" target="_blank" class="text-indigo-600 underline">${panelUrl}</a></span></p>
+            <p class="flex justify-between"><span class="font-semibold">RAM:</span><span>${selectedPlan.ram === "Unlimited" ? "Unlimited" : selectedPlan.ram + "GB"}</span></p>
+            <p class="flex justify-between"><span class="font-semibold">CPU:</span><span>${selectedPlan.cpu === "Unlimited" ? "Unlimited" : selectedPlan.cpu + "%"}</span></p>
+            <p class="flex justify-between"><span class="font-semibold">Disk:</span><span>${selectedPlan.disk === "Unlimited" ? "Unlimited" : selectedPlan.disk + "GB"}</span></p>
+            <p class="flex justify-between"><span class="font-semibold">Expired Server:</span><span>1 Bulan</span></p>
+          </div>
+          <div class="server-timer bg-indigo-50 rounded-2xl p-6 mb-8 text-center max-w-3xl mx-auto shadow-inner">
+            <h4 class="text-indigo-600 font-semibold mb-4 text-2xl">Masa Aktif Panel:</h4>
+            <div class="server-timer-value font-mono font-semibold text-slate-900 text-3xl" id="serverTimer">32 hari 00:00:00</div>
+          </div>
+          <button type="button" id="openPanelBtn" class="btn btn-success w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-2xl py-6 flex items-center justify-center gap-4 text-2xl max-w-3xl mx-auto">
+            <i class="fas fa-external-link-alt"></i> Buka Panel
+          </button>
+        `;
+
+        // Set panel URL
+        document.getElementById('openPanelBtn').onclick = () => {
+          window.open(panelUrl, '_blank');
+        };
+
+        // Show result section
+        panelResult.classList.remove('hidden');
+        qrSection.classList.add('hidden');
+        updatePaymentSteps(4);
+
+        // Start server expiry countdown
+        startServerExpiryCountdown();
+
+        // Enable copy buttons
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const text = e.currentTarget.dataset.text;
+            navigator.clipboard.writeText(text);
+            showNotification('success', 'Teks disalin!');
+          });
+        });
+
+        // Update transaction status
+        const transaction = transactionHistory.find(t => t.id === paymentState.transactionId);
+        if (transaction) {
+          transaction.status = 'success';
+          transaction.panelDetails = {
+            username: username,
+            password: password,
+            url: panelUrl,
+            serverId: server.id
+          };
+          transaction.serverExpiry = paymentState.serverExpiryTime.toISOString();
+          saveTransactionHistory();
+        }
+
+        // Send notification to Telegram
+        sendTelegramNotification(username, password, server.id);
+
+        showNotification('success', 'Panel berhasil dibuat!');
+      } catch (error) {
+        console.error('Error creating panel:', error);
+
+        // Show failed message
+        panelResult.innerHTML = `
+          <h3 class="text-red-600 text-3xl font-semibold mb-8 flex items-center gap-4"><i class="fas fa-exclamation-circle"></i> Gagal Membuat Panel</h3>
+          <div class="panel-details space-y-4 text-slate-700 text-lg max-w-3xl mx-auto mb-8">
+            <p class="flex justify-between"><span class="font-semibold">ID Transaksi:</span><span class="font-mono">${paymentState.transactionId}</span></p>
+            <p class="flex justify-between"><span class="font-semibold">Status:</span><span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-red-700 bg-red-100"><i class="fas fa-times-circle"></i> Gagal</span></p>
+            <p class="flex justify-between"><span class="font-semibold">Keterangan:</span><span>${error.message || 'Terjadi kesalahan saat membuat panel'}</span></p>
+            <p class="flex justify-between"><span class="font-semibold">Solusi:</span><span>Silakan hubungi admin untuk bantuan lebih lanjut</span></p>
+          </div>
+          <button type="button" id="contactAdminBtn" class="btn btn-primary w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl py-6 flex items-center justify-center gap-4 max-w-3xl mx-auto">
+            <i class="fab fa-whatsapp"></i> Hubungi Admin
+          </button>
+        `;
+
+        panelResult.classList.remove('hidden');
+
+        // Add event listener to contact admin button
+        document.getElementById('contactAdminBtn').addEventListener('click', () => {
+          window.open('https://wa.me/6285355458766', '_blank');
+        });
+
+        // Update transaction status
+        const transaction = transactionHistory.find(t => t.id === paymentState.transactionId);
+        if (transaction) {
+          transaction.status = 'failed';
+          saveTransactionHistory();
+        }
+
+        showNotification('error', 'Gagal membuat panel: ' + error.message);
+      } finally {
+        generateBtn.innerHTML = '<i class="fas fa-qrcode"></i> Lanjutkan Pembayaran';
+        generateBtn.disabled = false;
+      }
+    }, 3000);
+  }
+
+  // Capitalize first letter
+  function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
+  // Send notification to Telegram
+  function sendTelegramNotification(username, password, serverId) {
+    const message = `🚀 *Pembelian Panel Baru*
+
+📝 Detail Transaksi
+
+ID Transaksi: ${paymentState.transactionId}
+
+Nama Panel: ${username}
+
+Paket: ${selectedPlan.name}
+
+Harga: Rp${paymentState.paymentAmount.toLocaleString('id-ID')}${paymentState.appliedVoucher ? ` (Diskon ${paymentState.appliedVoucher.discount}%)` : ''}
+
+
+🔑 Detail Panel
+
+Username: ${username}
+
+Password: ${password}
+
+URL Panel: ${panelSettings.domainV2}/auth/login
+
+ID Server: ${serverId}
+
+
+Status: ✅ Berhasil`;
+
+    const url = `https://api.telegram.org/bot${telegramBot.token}/sendMessage`;
+    const params = {
+      chat_id: telegramBot.chatId,
+      text: message,
+      parse_mode: 'Markdown'
+    };
+
+    // In a real implementation, you would uncomment this:
+    // axios.get(url, { params }).catch(err => console.error('Telegram error:', err));
+
+    console.log('Telegram notification:', message);
+  }
+
+  // Cancel payment
+  function cancelPayment() {
+    clearInterval(paymentState.expiryTimer);
+    clearInterval(paymentState.paymentCheckInterval);
+
+    // Hide payment sections
+    qrSection.classList.add('hidden');
+    paymentInfo.classList.add('hidden');
+    paymentSteps.classList.add('hidden');
+
+    // Update transaction status
+    const transaction = transactionHistory.find(t => t.id === paymentState.transactionId);
+    if (transaction) {
+      transaction.status = 'cancelled';
+      saveTransactionHistory();
+    }
+
+    // Show cancelled message
+    panelResult.innerHTML = `
+      <h3 class="text-red-600 text-3xl font-semibold mb-8 flex items-center gap-4"><i class="fas fa-times-circle"></i> Transaksi Dibatalkan</h3>
+      <div class="panel-details space-y-4 text-slate-700 text-lg max-w-3xl mx-auto mb-8">
+        <p class="flex justify-between"><span class="font-semibold">ID Transaksi:</span><span class="font-mono">${paymentState.transactionId}</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Status:</span><span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-red-700 bg-red-100"><i class="fas fa-times-circle"></i> Dibatalkan</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Keterangan:</span><span>Pembayaran dibatalkan oleh pengguna</span></p>
+      </div>
+      <button type="button" id="newOrderBtn" class="btn btn-primary mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl py-6 flex items-center justify-center gap-4 text-xl max-w-3xl mx-auto">
+        <i class="fas fa-redo"></i> Buat Pesanan Baru
+      </button>
+    `;
+
+    panelResult.classList.remove('hidden');
+
+    // Add event listener to new order button
+    document.getElementById('newOrderBtn').addEventListener('click', () => {
+      panelResult.classList.add('hidden');
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = '<i class="fas fa-qrcode"></i> Lanjutkan Pembayaran';
+    });
+
+    showNotification('info', 'Pembayaran dibatalkan');
+  }
+
+  // Check refund transaction
+  function checkRefundTransaction() {
+    const transactionIdInput = refundTransactionId.value.trim();
+
+    if (!transactionIdInput) {
+      showNotification('error', 'Masukkan ID Transaksi');
+      return;
+    }
+
+    const transaction = transactionHistory.find(t => t.id.toUpperCase() === transactionIdInput.toUpperCase());
+
+    if (!transaction) {
+      refundResult.innerHTML = `
+        <div class="text-center p-8 text-red-600">
+          <i class="fas fa-exclamation-circle text-6xl mb-6"></i>
+          <h4 class="text-3xl font-semibold mb-4">Transaksi Tidak Ditemukan</h4>
+          <p>ID Transaksi <span class="font-mono">${transactionIdInput}</span> tidak ditemukan dalam riwayat.</p>
+        </div>
+      `;
+      refundResult.style.display = 'block';
+      return;
+    }
+
+    if (transaction.status !== 'success') {
+      refundResult.innerHTML = `
+        <div class="text-center p-8 text-red-600">
+          <i class="fas fa-exclamation-circle text-6xl mb-6"></i>
+          <h4 class="text-3xl font-semibold mb-4">Refund Tidak Tersedia</h4>
+          <p>Transaksi ini tidak dapat di-refund karena statusnya ${transaction.status}.</p>
+        </div>
+      `;
+      refundResult.style.display = 'block';
+      return;
+    }
+
+    // Check if already refunded
+    if (transaction.refunded) {
+      refundResult.innerHTML = `
+        <div class="text-center p-8 text-red-600">
+          <i class="fas fa-exclamation-circle text-6xl mb-6"></i>
+          <h4 class="text-3xl font-semibold mb-4">Sudah Direfund</h4>
+          <p>Transaksi ini sudah pernah di-refund sebelumnya.</p>
+        </div>
+      `;
+      refundResult.style.display = 'block';
+      return;
+    }
+
+    // Check if server is still active
+    const now = new Date();
+    const expiryDate = new Date(transaction.serverExpiry);
+    const isExpired = now > expiryDate;
+
+    refundResult.innerHTML = `
+      <h3 class="text-indigo-600 text-2xl font-semibold mb-6 flex items-center gap-4"><i class="fas fa-exchange-alt"></i> Detail Refund</h3>
+      <div class="panel-details space-y-4 text-slate-700 text-lg max-w-3xl mx-auto">
+        <p class="flex justify-between"><span class="font-semibold">ID Transaksi:</span><span class="font-mono">${transaction.id}</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Tanggal Pembelian:</span><span>${formatDateTime(new Date(transaction.date))}</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Nama Panel:</span><span>${transaction.panelDetails?.username || '-'}</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Paket:</span><span>${transaction.package || '-'}</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Harga:</span><span>${formatIDR(transaction.amount)}</span></p>
+        <p class="flex justify-between"><span class="font-semibold">Status Panel:</span><span>${isExpired ?
+      '<span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100"><i class="fas fa-hourglass-end"></i> Expired</span>' :
+      '<span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-green-700 bg-green-100"><i class="fas fa-check-circle"></i> Aktif</span>'}</span></p>
+      </div>
+
+      <div class="mt-8 max-w-3xl mx-auto">
+        <button type="button" id="confirmRefundBtn" class="btn btn-danger w-full bg-red-600 hover:bg-red-700 text-white font-semibold rounded-2xl py-6 flex items-center justify-center gap-4 text-2xl">
+          <i class="fas fa-exchange-alt"></i> Konfirmasi Refund
+        </button>
+      </div>
+    `;
+
+    refundResult.style.display = 'block';
+
+    // Add event listener to confirm refund button
+    document.getElementById('confirmRefundBtn').addEventListener('click', () => {
+      processRefund(transaction);
+    });
+  }
+
+  // Process refund (recreate panel with same username and password)
+  async function processRefund(transaction) {
+    // Show loading
+    const confirmBtn = document.getElementById('confirmRefundBtn');
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+    confirmBtn.disabled = true;
+
+    // Simulate API call delay
+    setTimeout(async () => {
+      try {
+        // Recreate panel with same username and password
+        const username = transaction.panelDetails.username;
+        const password = transaction.panelDetails.password;
+        const panelUrl = transaction.panelDetails.url;
+
+        // Create user account
+        const email = `${username}@gmail.com`;
+        const name = `${capitalizeFirstLetter(username)} Server`;
+
+        // First create the user
+        const userResponse = await fetch(`${panelSettings.domainV2}/api/application/users`, {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + panelSettings.apikeyV2
+          },
+          body: JSON.stringify({
+            "email": email,
+            "username": username.toLowerCase(),
+            "first_name": name,
+            "last_name": "Server",
+            "language": "en",
+            "password": password.toString()
+          })
+        });
+
+        const userData = await userResponse.json();
+
+        if (userData.errors) {
+          throw new Error(userData.errors[0].detail);
+        }
+
+        const user = userData.attributes;
+        const userId = user.id;
+
+        // Get egg details
+        const eggResponse = await fetch(`${panelSettings.domainV2}/api/application/nests/${panelSettings.nestidV2}/eggs/${panelSettings.eggV2}`, {
+          method: "GET",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + panelSettings.apikeyV2
+          }
+        });
+
+        const eggData = await eggResponse.json();
+        const startupCmd = eggData.attributes.startup;
+
+        // Create server
+        const serverResponse = await fetch(`${panelSettings.domainV2}/api/application/servers`, {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + panelSettings.apikeyV2,
+          },
+          body: JSON.stringify({
+            "name": name,
+            "description": `Refunded panel on ${formatDateTime(new Date())}`,
+            "user": userId,
+            "egg": parseInt(panelSettings.eggV2),
+            "docker_image": "ghcr.io/parkervcp/yolks:nodejs_18",
+            "startup": startupCmd,
+            "environment": {
+              "INST": "npm",
+              "USER_UPLOAD": "0",
+              "AUTO_UPDATE": "0",
+              "CMD_RUN": "npm start"
+            },
+            "limits": {
+              "memory": selectedPlan.ram === "Unlimited" ? 0 : parseInt(selectedPlan.ram) * 1024,
+              "swap": 0,
+              "disk": selectedPlan.disk === "Unlimited" ? 0 : parseInt(selectedPlan.disk) * 1024,
+              "io": 500,
+              "cpu": selectedPlan.cpu === "Unlimited" ? 0 : parseInt(selectedPlan.cpu)
+            },
+            "feature_limits": {
+              "databases": 5,
+              "backups": 5,
+              "allocations": 5
+            },
+            "deploy": {
+              "locations": [parseInt(panelSettings.locV2)],
+              "dedicated_ip": false,
+              "port_range": [],
+            }
+          })
+        });
+
+        const serverData = await serverResponse.json();
+
+        if (serverData.errors) {
+          throw new Error(serverData.errors[0].detail);
+        }
+
+        // Mark transaction as refunded
+        transaction.refunded = true;
+        transaction.refundDate = new Date().toISOString();
+        saveTransactionHistory();
+
+        // Show success message
+        refundResult.innerHTML = `
+          <div class="text-center p-8 text-green-600">
+            <i class="fas fa-check-circle text-7xl mb-6"></i>
+            <h4 class="text-3xl font-semibold mb-4">Refund Berhasil</h4>
+            <p>Panel telah berhasil di-refund dan dibuat ulang dengan username dan password yang sama.</p>
+            <div class="mt-8 text-left bg-indigo-50 p-6 rounded-2xl max-w-3xl mx-auto shadow-inner">
+              <p><strong>ID Transaksi:</strong> ${transaction.id}</p>
+              <p><strong>Tanggal Refund:</strong> ${formatDateTime(new Date())}</p>
+              <p><strong>Jumlah Refund:</strong> ${formatIDR(transaction.amount)}</p>
+            </div>
+          </div>
+        `;
+
+        showNotification('success', 'Refund berhasil diproses!');
+      } catch (error) {
+        console.error('Error processing refund:', error);
+        refundResult.innerHTML = `
+          <div class="text-center p-8 text-red-600">
+            <i class="fas fa-exclamation-circle text-7xl mb-6"></i>
+            <h4 class="text-3xl font-semibold mb-4">Gagal Memproses Refund</h4>
+            <p>Terjadi kesalahan saat memproses refund: ${error.message}</p>
+          </div>
+        `;
+
+        showNotification('error', 'Gagal memproses refund');
+      }
+    }, 2000);
+  }
+
+  // Save transaction history to localStorage
+  function saveTransactionHistory() {
+    localStorage.setItem('panelHostingTransactions', JSON.stringify(transactionHistory));
+  }
+</script>
+</body>
+</html>
