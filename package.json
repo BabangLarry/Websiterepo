@@ -1,0 +1,17 @@
+{
+  "name": "image-upload-vercel",
+  "version": "1.0.0",
+  "description": "Image upload with URL generation for Vercel",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build needed'",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "formidable": "^3.5.1"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  }
+}
